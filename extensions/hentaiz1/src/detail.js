@@ -49,7 +49,7 @@ function execute(url) {
     }
 
     var html = doc.toString() + "";
-    var slug = decodeURIComponent(url.split('/').pop());
+    var slug = decodeURI(url.split('/').pop());
     
     // 1. Parse tiêu đề
     var rawName = doc.select("h2").first() ? doc.select("h2").first().text() + "" : "";
@@ -96,60 +96,47 @@ function execute(url) {
         }
     });
 
-    // 6. Gọi API getSeriesEpisodes làm bổ trợ cào ảnh bìa và TOC (đặc biệt hữu dụng cho phim lẻ OVA)
-    var cover = "";
-    var hash = "1edhnia"; // hash mặc định
-    var hashMatch = html.match(/\/remote\/([a-zA-Z0-9_-]+)\/getSeriesEpisodes/);
-    if (hashMatch) {
-        hash = hashMatch[1];
-    }
+// 6. Gọi API getSeriesEpisodes để lấy thông tin cover trực tiếp (giống hentaizhot)
+var cover = "";
+var hash = "1edhnia"; // hash mặc định (cùng với hentaizhot)
+var hashMatch = html.match(/\/remote\/([a-zA-Z0-9_-]+)\/getSeriesEpisodes/);
+if (hashMatch) { hash = hashMatch[1]; }
 
-    try {
-        load("crypto.js");
-        var payload = CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(JSON.stringify([{ "currentSlug": 1 }, slug])));
-        var apiUrl = BASE_URL + "/_app/remote/" + hash + "/getSeriesEpisodes?payload=" + encodeURIComponent(payload);
-        
-        var apiRes = fetch(apiUrl, { headers: { "User-Agent": UserAgent.android() } });
-        if (apiRes && apiRes.ok) {
-            var apiData = JSON.parse(apiRes.text() + "");
-            var svelteData = null;
-            if (apiData.data) {
-                if (typeof apiData.data === 'string') {
-                    try {
-                        svelteData = JSON.parse(apiData.data);
-                    } catch (e) {}
-                } else {
-                    svelteData = apiData.data;
-                }
-            }
-            if (!svelteData) {
-                svelteData = apiData.result;
+try {
+    load("crypto.js");
+    var payload = CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(JSON.stringify([{ "currentSlug": 1 }, slug])));
+    var apiUrl = BASE_URL + "/_app/remote/" + hash + "/getSeriesEpisodes?payload=" + encodeURIComponent(payload);
+
+    var apiRes = fetch(apiUrl, { headers: { "User-Agent": UserAgent.android() } });
+    if (apiRes && apiRes.ok) {
+        var apiData = JSON.parse(apiRes.text() + "");
+        var svelteData = apiData.result || apiData.data || null;
+
+        if (svelteData) {
+            // ① Lấy cover trực tiếp từ episode object (poster/backdrop/thumbnail)
+            if (svelteData.posterImage && svelteData.posterImage.filePath) {
+                cover = IMAGE_URL + svelteData.posterImage.filePath;
+            } else if (svelteData.backdropImage && svelteData.backdropImage.filePath) {
+                cover = IMAGE_URL + svelteData.backdropImage.filePath;
+            } else if (svelteData.thumbnailImage && svelteData.thumbnailImage.filePath) {
+                cover = IMAGE_URL + svelteData.thumbnailImage.filePath;
             }
 
-            if (svelteData) {
-                // Quét tìm ảnh bìa poster dọc chất lượng cao chính xác
-                if (Array.isArray(svelteData)) {
-                    for (var idx = 0; idx < svelteData.length; idx++) {
-                        var item = svelteData[idx];
-                        if (typeof item === 'string') {
-                            var matchCover = item.match(/\/202[0-9]\/[0-9]{2}\/[a-zA-Z0-9-_.]+\.(?:jpg|png|webp)/i);
-                            if (matchCover) {
-                                cover = normalizeCoverUrl(matchCover[0]);
-                                break;
-                            }
-                        }
-                    }
-                }
+            // ② Nếu không có cover, fallback bằng regex trên chuỗi JSON
+            if (!cover) {
+                var matchCover = JSON.stringify(svelteData).match(/\/202[0-9]\/[0-9]{2}\/[a-zA-Z0-9-]+\.(?:jpg|png|webp)/i);
+                if (matchCover) { cover = normalizeCoverUrl(matchCover[0]); }
+            }
 
-                // Nếu cào DOM tập phim bị rỗng (ví dụ phim lẻ), dùng data giải mã từ API
-                if (episodesList.length === 0) {
-                    episodesList = parseSvelteTable(svelteData);
-                }
+            // ③ Nếu danh sách tập phim rỗng, dùng parseSvelteTable như trước
+            if (episodesList.length === 0) {
+                episodesList = parseSvelteTable(svelteData);
             }
         }
-    } catch (e) {
-        // Lỗi lấy API mục lục thì bỏ qua
     }
+} catch (e) {
+    // Bỏ qua lỗi API, duy trì fallback hiện tại
+}    
 
     // Fallback: Tìm ảnh bìa từ SvelteKit hydration data trong HTML nếu API không trả về
     if (!cover) {
