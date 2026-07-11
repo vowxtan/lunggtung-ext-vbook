@@ -1,5 +1,30 @@
 load('config.js');
 
+function parseSvelteTable(table) {
+    var data = table;
+    var indices = table[1]; 
+    if (!indices || !Array.isArray(indices)) return [];
+
+    function resolve(idx) { 
+        return (typeof idx === 'number') ? data[idx] : idx; 
+    }
+
+    var chapters = [];
+    for (var i = 0; i < indices.length; i++) {
+        var item = resolve(indices[i]);
+        if (item && item.slug) {
+            var epSlug = resolve(item.slug);
+            var epNumber = resolve(item.episodeNumber) || (i + 1);
+            chapters.push({
+                name: "Tập " + epNumber,
+                url: BASE_URL + "/watch/" + epSlug,
+                host: BASE_URL
+            });
+        }
+    }
+    return chapters.reverse();
+}
+
 function execute(url) {
     url = normalizeUrl(url);
     var b = Engine.newBrowser();
@@ -30,47 +55,20 @@ function execute(url) {
     var rawName = doc.select("h2").first() ? doc.select("h2").first().text() + "" : "";
     var name = rawName.replace(/\s*-\s*Tập\s*\d+.*$/i, "").replace(/\s*Tập\s*\d+.*$/i, "").trim();
 
-    // 2. Trích xuất dữ liệu SvelteKit JSON ẩn nhúng trong HTML thô
-    var episodeId = "";
-    var cover = "";
-    var dataMatch = html.match(/data:\s*(\[[\s\S]*?\])\s*,\s*uses:/);
-    if (!dataMatch) {
-        dataMatch = html.match(/data:\s*(\[[\s\S]*?\])/);
-    }
-    if (dataMatch) {
-        try {
-            var dataArr = [];
-            eval("dataArr = " + dataMatch[1] + ";");
-            for (var i = 0; i < dataArr.length; i++) {
-                if (dataArr[i] && dataArr[i].data && dataArr[i].data.episode) {
-                    var epData = dataArr[i].data.episode;
-                    episodeId = epData.id || "";
-                    
-                    // Lấy ảnh bìa chính chủ từ JSON nếu có
-                    var imgObj = epData.posterImage || epData.backdropImage || epData.thumbnailImage;
-                    if (imgObj && imgObj.filePath) {
-                        cover = normalizeCoverUrl(imgObj.filePath);
-                    }
-                    break;
-                }
-            }
-        } catch (e) {}
-    }
-
-    // 3. Parse mô tả
+    // 2. Parse mô tả
     var description = doc.select(".pointer-events-auto p").text() + "";
     if (!description) {
         description = doc.select(".line-clamp-3").text() + "";
     }
 
-    // 4. Parse tác giả/Studio
+    // 3. Parse tác giả/Studio
     var author = "HentaiZ";
     var studioEl = doc.select("a[href*='/studios/']").first();
     if (studioEl) {
         author = studioEl.text().trim();
     }
 
-    // 5. Parse thể loại
+    // 4. Parse thể loại
     var genres = [];
     doc.select("a[href*='/genres/']").forEach(function(el) {
         var gTitle = el.text().trim();
@@ -84,7 +82,7 @@ function execute(url) {
         }
     });
 
-    // 6. Lưu cache danh sách tập phim (TOC) để toc.js đọc nhanh gọn
+    // 5. Cào danh sách tập phim (TOC) từ DOM
     var episodesList = [];
     doc.select(".divide-y a[href*='/watch/']").forEach(function(el) {
         var epTitle = el.select("span").text() || el.text() || "";
@@ -92,13 +90,57 @@ function execute(url) {
         if (epHref) {
             episodesList.push({
                 name: epTitle.trim(),
-                url: normalizeUrl(epHref)
+                url: normalizeUrl(epHref),
+                host: BASE_URL
             });
         }
     });
-    if (episodesList.length > 0) {
-        cacheStorage.setItem("cached_toc_" + slug, JSON.stringify(episodesList));
+
+    // 6. Gọi API getSeriesEpisodes làm bổ trợ cào ảnh bìa và TOC (đặc biệt hữu dụng cho phim lẻ OVA)
+    var cover = "";
+    var hash = "1edhnia"; // hash mặc định
+    var hashMatch = html.match(/\/remote\/([a-zA-Z0-9_-]+)\/getSeriesEpisodes/);
+    if (hashMatch) {
+        hash = hashMatch[1];
     }
+
+    try {
+        load("crypto.js");
+        var payload = CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(JSON.stringify([{ "currentSlug": 1 }, slug])));
+        var apiUrl = BASE_URL + "/_app/remote/" + hash + "/getSeriesEpisodes?payload=" + encodeURIComponent(payload);
+        
+        var apiRes = fetch(apiUrl, { headers: { "User-Agent": UserAgent.chrome() } });
+        if (apiRes && apiRes.ok) {
+            var apiData = JSON.parse(apiRes.text() + "");
+            var svelteData = apiData.result || (apiData.data && apiData.data.result);
+            if (svelteData) {
+                // Quét tìm ảnh bìa chất lượng cao từ svelteData
+                var matchCover = JSON.stringify(svelteData).match(/(\/202[0-9]\/[0-9]{2}\/[a-zA-Z0-9-]+\.(?:jpg|png|webp))/);
+                if (matchCover) {
+                    cover = normalizeCoverUrl(matchCover[1]);
+                }
+
+                // Nếu cào DOM tập phim bị rỗng (ví dụ phim lẻ), dùng data giải mã từ API
+                if (episodesList.length === 0) {
+                    episodesList = parseSvelteTable(svelteData);
+                }
+            }
+        }
+    } catch (e) {
+        // Lỗi lấy API mục lục thì bỏ qua
+    }
+
+    // Nếu vẫn rỗng tập, thêm tập hiện tại làm tập đơn
+    if (episodesList.length === 0) {
+        episodesList.push({
+            name: "Xem phim",
+            url: url,
+            host: BASE_URL
+        });
+    }
+
+    // Lưu cache danh sách tập phim cuối cùng để toc.js đọc offline tức thì
+    cacheStorage.setItem("cached_toc_" + slug, JSON.stringify(episodesList));
 
     // 7. Tạo danh sách phim liên quan
     var suggests = [];
@@ -109,6 +151,25 @@ function execute(url) {
             input: suggestHtml,
             script: "suggest.js"
         });
+    }
+
+    // 8. Trích xuất episodeId từ SvelteKit JSON data nhúng trong HTML thô để hiển thị bình luận
+    var episodeId = "";
+    var dataMatch = html.match(/data:\s*(\[[\s\S]*?\])\s*,\s*uses:/);
+    if (!dataMatch) {
+        dataMatch = html.match(/data:\s*(\[[\s\S]*?\])/);
+    }
+    if (dataMatch) {
+        try {
+            var dataArr = [];
+            eval("dataArr = " + dataMatch[1] + ";");
+            for (var i = 0; i < dataArr.length; i++) {
+                if (dataArr[i] && dataArr[i].data && dataArr[i].data.episode) {
+                    episodeId = dataArr[i].data.episode.id || "";
+                    break;
+                }
+            }
+        } catch (e) {}
     }
 
     var comments = undefined;
