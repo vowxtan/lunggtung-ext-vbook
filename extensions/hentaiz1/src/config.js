@@ -1,4 +1,5 @@
 let BASE_URL = "https://hentaiz1.com";
+let IMAGE_URL = "https://storage.haiten.org";
 try { if (CONFIG_URL) BASE_URL = CONFIG_URL; } catch (e) {}
 
 function normalizeUrl(url) {
@@ -7,6 +8,15 @@ function normalizeUrl(url) {
     if (url.indexOf('//') === 0) return 'https:' + url;
     if (url.indexOf('/') === 0) return BASE_URL + url;
     return url;
+}
+
+function normalizeCoverUrl(url) {
+    if (!url) return '';
+    url = url + "";
+    if (url.indexOf('//') === 0) return 'https:' + url;
+    if (url.indexOf('http') === 0) return url;
+    if (url.indexOf('/') === 0) return IMAGE_URL + url;
+    return IMAGE_URL + '/' + url;
 }
 
 function parseCards(doc, selector) {
@@ -31,10 +41,10 @@ function parseCards(doc, selector) {
         var episode = textLines[0] ? textLines[0] : "";
 
         list.push({
-            name: title,
+            name: title.trim(),
             link: link,
-            cover: normalizeUrl(cover),
-            description: episode,
+            cover: normalizeCoverUrl(cover),
+            description: episode.trim(),
             host: BASE_URL
         });
     });

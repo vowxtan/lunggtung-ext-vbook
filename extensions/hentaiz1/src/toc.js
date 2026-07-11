@@ -2,13 +2,30 @@ load('config.js');
 
 function execute(url) {
     url = normalizeUrl(url);
+    var slug = url.split('/').pop();
+
+    // 1. Thử lấy từ cacheStorage đã được lưu ở detail.js (Chạy offline cực nhanh)
+    var cached = cacheStorage.getItem("cached_toc_" + slug);
+    if (cached) {
+        try {
+            var table = JSON.parse(cached);
+            var chapters = parseSvelteTable(table);
+            if (chapters && chapters.length > 0) {
+                return Response.success(chapters);
+            }
+        } catch (e) {
+            // Lỗi parse cache thì fallback cào WebView DOM bên dưới
+        }
+    }
+
+    // 2. Fallback: Khởi chạy WebView để cào DOM online nếu không có cache
     var b = Engine.newBrowser();
     var doc = null;
     try {
         b.setUserAgent(UserAgent.chrome());
         b.launchAsync(url);
 
-        // Chờ SvelteKit render danh sách các tập phim (Các tập khác)
+        // Chờ SvelteKit render danh sách các tập phim
         for (var j = 0; j < 10; j++) {
             sleep(750);
             doc = b.html();
@@ -24,12 +41,36 @@ function execute(url) {
     return Response.error("Không thể tải danh sách tập phim: " + url);
 }
 
+function parseSvelteTable(table) {
+    var data = table;
+    var indices = table[1]; 
+    if (!indices || !Array.isArray(indices)) return [];
+
+    function resolve(idx) { 
+        return (typeof idx === 'number') ? data[idx] : idx; 
+    }
+
+    var chapters = [];
+    for (var i = 0; i < indices.length; i++) {
+        var item = resolve(indices[i]);
+        if (item && item.slug) {
+            var epSlug = resolve(item.slug);
+            var epNumber = resolve(item.episodeNumber) || (i + 1);
+            chapters.push({
+                name: "Tập " + epNumber,
+                url: BASE_URL + "/watch/" + epSlug,
+                host: BASE_URL
+            });
+        }
+    }
+    // Sắp xếp lại hiển thị Tập 1 ở đầu
+    return chapters.reverse();
+}
+
 function parseTOC(url, doc) {
     var chapters = [];
     var seen = {};
 
-    // Trích xuất slug của phim hiện tại để lọc các tập cùng bộ
-    // Ví dụ: từ "https://hentaiz1.com/watch/todo-no-tsumari-2" -> slug là "todo-no-tsumari"
     var parts = url.split('/watch/');
     var slug = "";
     if (parts.length > 1) {
@@ -37,7 +78,6 @@ function parseTOC(url, doc) {
     }
 
     if (!slug) {
-        // Nếu không lấy được slug, fallback thêm tập hiện tại vào list
         return Response.success([{
             name: "Xem ngay",
             url: url,
@@ -53,12 +93,10 @@ function parseTOC(url, doc) {
             seen[href] = true;
 
             var rawText = el.text().trim();
-            // Lấy text hiển thị gọn gàng, ví dụ "Tập X" hoặc "Tập X - Tên tập"
             var displayName = "";
             var textLines = rawText.split('\n').map(function(t) { return t.trim(); }).filter(function(t) { return t !== ''; });
             
             if (textLines.length > 0) {
-                // Thường dòng đầu là "Tập X"
                 if (textLines[0].indexOf("Tập") !== -1) {
                     displayName = textLines[0];
                 } else {
@@ -79,7 +117,6 @@ function parseTOC(url, doc) {
     });
 
     if (chapters.length === 0) {
-        // Fallback nếu không parse được danh sách tập
         chapters.push({
             name: doc.select("h2").first() ? doc.select("h2").first().text().trim() : "Xem ngay",
             url: url,
@@ -87,7 +124,5 @@ function parseTOC(url, doc) {
         });
     }
 
-    // Sắp xếp lại danh sách tập (thường HentaiZ liệt kê tập mới nhất lên đầu, 
-    // đảo ngược lại để hiển thị Tập 1 trước)
     return Response.success(chapters.reverse());
 }
