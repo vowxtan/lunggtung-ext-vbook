@@ -250,13 +250,12 @@ function execute(url) {
     }
 
     // 5. Bình luận
-    var comments = undefined;
+    var comment = undefined;
     if (episodeId) {
-        comments = [{
-            title: "Bình luận",
+        comment = {
             input: episodeId,
             script: "comment.js"
-        }];
+        };
     }
 
     var responseObj = {
@@ -267,7 +266,7 @@ function execute(url) {
         ongoing: true,
         genres: genres.length > 0 ? genres : undefined,
         suggests: suggests.length > 0 ? suggests : undefined,
-        comments: comments
+        comment: comment
     };
 
     if (cover) {
