@@ -13,30 +13,19 @@ function execute(url, page) {
         }
     }
 
-    var b = Engine.newBrowser();
-    var doc = null;
-    try {
-        b.setUserAgent(UserAgent.chrome());
-        b.launchAsync(fetchUrl);
+    var res = fetch(fetchUrl, { headers: { "User-Agent": UserAgent.chrome() } });
+    if (res && res.ok) {
+        var html = res.text();
+        var svelteData = parseSvelteKitData(html);
+        if (svelteData) {
+            var list = parseEpisodes(svelteData);
+            if (list.length > 0) {
+                var hasNext = list.length >= 12;
+                var next = hasNext ? (parseInt(page) + 1).toString() : null;
 
-        // Chờ SvelteKit render Client-side JS
-        for (var j = 0; j < 10; j++) {
-            sleep(750);
-            doc = b.html();
-            if (doc && doc.select('a[href*="/watch/"]').size() > 0) break;
+                return Response.success(list, next);
+            }
         }
-    } finally {
-        b.close();
-    }
-
-    if (doc && doc.select('a[href*="/watch/"]').size() > 0) {
-        var list = parseCards(doc);
-        
-        // Nếu số lượng card lấy được >= 12, giả định có trang tiếp theo
-        var hasNext = list.length >= 12;
-        var next = hasNext ? (parseInt(page) + 1).toString() : null;
-
-        return Response.success(list, next);
     }
     
     return Response.error("Không thể tải danh sách phim từ: " + fetchUrl);

@@ -50,3 +50,51 @@ function parseCards(doc, selector) {
     });
     return list;
 }
+
+function parseSvelteKitData(html) {
+    var dataMatch = (html + "").match(/data:\s*(\[[\s\S]*?\]),\s*form:/);
+    if (dataMatch) {
+        try {
+            return eval(dataMatch[1]);
+        } catch (e) {}
+    }
+    return null;
+}
+
+function parseEpisodes(obj) {
+    var list = [];
+    if (!obj || !Array.isArray(obj)) return list;
+    
+    var episodes = null;
+    for (var i = 0; i < obj.length; i++) {
+        if (obj[i] && obj[i].data && obj[i].data.episodes) {
+            episodes = obj[i].data.episodes;
+            break;
+        }
+    }
+
+    if (!episodes || !Array.isArray(episodes)) return list;
+
+    episodes.forEach(function(ep) {
+        if (!ep) return;
+        var name = ep.title ? ep.title + "" : "";
+        if (ep.episodeNumber) {
+            name += " - Tập " + ep.episodeNumber;
+        }
+        var link = BASE_URL + "/watch/" + ep.slug;
+        var coverPath = ep.posterImage ? (ep.posterImage.filePath || "") + "" : "";
+        var cover = normalizeCoverUrl(coverPath);
+        var description = ep.studios && ep.studios.length > 0 && ep.studios[0].studio ? ep.studios[0].studio.name + "" : "";
+
+        list.push({
+            name: name.trim(),
+            link: link,
+            cover: cover,
+            description: description.trim(),
+            host: BASE_URL
+        });
+    });
+
+    return list;
+}
+
