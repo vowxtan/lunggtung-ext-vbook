@@ -13,6 +13,10 @@ function normalizeUrl(url) {
 function normalizeCoverUrl(url) {
     if (!url) return '';
     url = url + "";
+    var matchPath = url.match(/\/202[0-9]\/[0-9]{2}\/[a-zA-Z0-9-]+\.(?:jpg|png|webp)/);
+    if (matchPath) {
+        return IMAGE_URL + matchPath[0];
+    }
     if (url.indexOf('/watch/') !== -1) return '';
     if (url.indexOf('//') === 0) return 'https:' + url;
     if (url.indexOf('http') === 0) return url;
