@@ -25,6 +25,34 @@ function parseSvelteTable(table) {
     return chapters.reverse();
 }
 
+function extractSvelteData(html) {
+    var startIdx = html.indexOf('data:');
+    if (startIdx === -1) return null;
+    
+    var bracketCount = 0;
+    var started = false;
+    var jsonStr = "";
+    
+    // Duyệt ký tự đếm ngoặc để trích xuất mảng dữ liệu lồng nhau an toàn
+    for (var i = startIdx; i < html.length; i++) {
+        var char = html.charAt(i);
+        if (char === '[') {
+            bracketCount++;
+            started = true;
+        }
+        if (started) {
+            jsonStr += char;
+        }
+        if (char === ']') {
+            bracketCount--;
+            if (bracketCount === 0 && started) {
+                return jsonStr;
+            }
+        }
+    }
+    return null;
+}
+
 function execute(url) {
     url = normalizeUrl(url);
     
@@ -43,18 +71,15 @@ function execute(url) {
     var html = res.text() + "";
     var slug = url.split('/').pop();
     
-    // Bóc tách SvelteKit JSON data ẩn nhúng sẵn trong HTML tĩnh
-    var dataMatch = html.match(/data:\s*(\[[\s\S]*?\])\s*,\s*uses:/);
-    if (!dataMatch) {
-        dataMatch = html.match(/data:\s*(\[[\s\S]*?\])/);
-    }
-    if (!dataMatch) {
+    // Bóc tách SvelteKit JSON data ẩn nhúng sẵn trong HTML tĩnh bằng thuật toán đếm ngoặc lồng nhau
+    var jsonStr = extractSvelteData(html);
+    if (!jsonStr) {
         return Response.error("Không tìm thấy dữ liệu cấu trúc SvelteKit.");
     }
 
     var dataArr = [];
     try {
-        eval("dataArr = " + dataMatch[1] + ";");
+        eval("dataArr = " + jsonStr + ";");
     } catch (e) {
         return Response.error("Lỗi biên dịch SvelteKit JSON: " + e.message);
     }
