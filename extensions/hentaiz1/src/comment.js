@@ -5,12 +5,16 @@ function execute(input, page) {
     var episodeId = "";
     var hash = "18sc35r"; // Default comment hash
 
-    try {
-        var params = JSON.parse(input);
-        episodeId = params.episodeId;
-        hash = params.hash || "18sc35r";
-    } catch (e) {
-        episodeId = input; // Fallback
+    if (input && input.indexOf('{') === 0) {
+        try {
+            var params = JSON.parse(input);
+            episodeId = params.episodeId;
+            hash = params.hash || "18sc35r";
+        } catch (e) {
+            episodeId = input;
+        }
+    } else {
+        episodeId = input;
     }
 
     if (!episodeId) return Response.success([]);

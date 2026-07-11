@@ -131,6 +131,13 @@ function execute(url) {
         }
     }
 
+    if (!episodeId) {
+        var idMatch = html.match(/episode\s*:\s*\{\s*id\s*:\s*["']([^"']+)["']/);
+        if (idMatch) {
+            episodeId = idMatch[1];
+        }
+    }
+
     // Fallback nếu không parse được qua JSON
     if (!name) {
         var doc = Html.parse(html);
@@ -245,14 +252,9 @@ function execute(url) {
     // 5. Bình luận
     var comments = undefined;
     if (episodeId) {
-        var commentHash = "18sc35r";
-        var commentHashMatch = html.match(/\/remote\/([a-zA-Z0-9_-]+)\/getComments/);
-        if (commentHashMatch) {
-            commentHash = commentHashMatch[1];
-        }
         comments = [{
             title: "Bình luận",
-            input: JSON.stringify({ episodeId: episodeId, hash: commentHash }),
+            input: episodeId,
             script: "comment.js"
         }];
     }
