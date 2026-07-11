@@ -1,0 +1,20 @@
+{
+    "metadata": {
+        "author": "lunggtung",
+        "description": "📛🔻📛"
+    },
+    "data": [
+        {
+            "name": "HentaiZ1",
+            "author": "lunggtung",
+            "path": "https://raw.githubusercontent.com/vowxtan/lunggtung-ext-vbook/main/extensions/hentaiz1/plugin.zip",
+            "version": 1,
+            "source": "https://hentaiz1.com",
+            "icon": "https://raw.githubusercontent.com/vowxtan/lunggtung-ext-vbook/main/extensions/hentaiz1/icon.png",
+            "description": "Xem Hentai Vietsub tại hentaiz1.com",
+            "type": "video",
+            "locale": "vi_VN",
+            "tag": "nsfw"
+        }
+    ]
+}
