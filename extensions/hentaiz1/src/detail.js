@@ -155,8 +155,8 @@ function execute(url) {
     if (!cover) {
         doc.select("script").forEach(function(s) {
             var text = s.html() + "";
-            if (text.indexOf("filePath:") !== -1) {
-                text = text.replace(/\\"/g, '"').replace(/\\'/g, "'");
+            if (text.indexOf("filePath") !== -1 || text.indexOf("backdropImage") !== -1) {
+                text = decodeSvelteKitString(text);
                 var fileMatch = text.match(/filePath\s*:\s*["']([^"']+)["']/);
                 if (fileMatch) {
                     cover = normalizeCoverUrl(fileMatch[1]);

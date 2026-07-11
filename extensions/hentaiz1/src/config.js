@@ -24,6 +24,19 @@ function normalizeCoverUrl(url) {
     return IMAGE_URL + '/' + url;
 }
 
+function decodeSvelteKitString(str) {
+    if (!str) return "";
+    try {
+        // Giải mã \uXXXX
+        str = str.replace(/\\u([a-fA-F0-9]{4})/g, function(match, grp) {
+            return String.fromCharCode(parseInt(grp, 16));
+        });
+        // Giải mã các ký tự escape thông thường
+        str = str.replace(/\\(.)/g, "$1");
+    } catch (e) {}
+    return str;
+}
+
 function parseCards(doc, selector) {
     if (!selector) selector = 'a[href*="/watch/"]';
     
@@ -31,8 +44,8 @@ function parseCards(doc, selector) {
     var slugToCover = {};
     doc.select("script").forEach(function(s) {
         var text = s.html() + "";
-        if (text.indexOf("slug:") !== -1) {
-            text = text.replace(/\\"/g, '"').replace(/\\'/g, "'");
+        if (text.indexOf("slug") !== -1) {
+            text = decodeSvelteKitString(text);
             var parts = text.split(/slug\s*:\s*["']/);
             for (var i = 1; i < parts.length; i++) {
                 var part = parts[i];
