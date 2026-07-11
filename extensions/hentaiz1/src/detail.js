@@ -27,132 +27,167 @@ function parseSvelteTable(table) {
 
 function execute(url) {
     url = normalizeUrl(url);
-    var b = Engine.newBrowser();
-    var doc = null;
-    try {
-        // Sử dụng UserAgent Android di động để WebView render tự nhiên, bypass lỗi màn hình đen của SvelteKit
-        b.setUserAgent(UserAgent.android());
-        b.launchAsync(url);
+    var slug = decodeURI(url.split('/').pop());
 
-        // Chờ SvelteKit render chi tiết phim và danh sách gợi ý phim liên quan (.space-y-3)
-        for (var j = 0; j < 10; j++) {
-            sleep(750);
-            doc = b.html();
-            if (doc && doc.select("h2").size() > 0 && doc.select(".space-y-3 a[href*='/watch/']").size() > 0) break;
-        }
-    } finally {
-        b.close();
-    }
-
-    if (!doc) {
+    // 1. Fetch HTML tĩnh siêu tốc
+    var res = fetch(url, { headers: { "User-Agent": UserAgent.chrome() } });
+    if (!res || !res.ok) {
         return Response.error("Không thể tải trang chi tiết phim: " + url);
     }
+    var html = res.text() + "";
 
-    var html = doc.toString() + "";
-    var slug = decodeURI(url.split('/').pop());
-    
-    // 1. Parse tiêu đề
-    var rawName = doc.select("h2").first() ? doc.select("h2").first().text() + "" : "";
-    var name = rawName.replace(/\s*-\s*Tập\s*\d+.*$/i, "").replace(/\s*Tập\s*\d+.*$/i, "").trim();
-
-    // 2. Parse mô tả
-    var description = doc.select(".pointer-events-auto p").text() + "";
-    if (!description) {
-        description = doc.select(".line-clamp-3").text() + "";
-    }
-
-    // 3. Parse tác giả/Studio
+    var name = "";
+    var description = "";
     var author = "HentaiZ";
-    var studioEl = doc.select("a[href*='/studios/']").first();
-    if (studioEl) {
-        author = studioEl.text().trim();
+    var genres = [];
+    var episodeId = "";
+    var cover = "";
+
+    // 2. Trích xuất metadata từ SvelteKit JSON data nhúng trong HTML
+    var dataArr = [];
+    try {
+        var startIdx = html.indexOf('data:');
+        if (startIdx !== -1) {
+            var bracketCount = 0;
+            var started = false;
+            var jsonStr = "";
+            for (var i = startIdx; i < html.length; i++) {
+                var char = html.charAt(i);
+                if (char === '[') {
+                    bracketCount++;
+                    started = true;
+                }
+                if (started) {
+                    jsonStr += char;
+                }
+                if (char === ']') {
+                    bracketCount--;
+                    if (bracketCount === 0 && started) {
+                        break;
+                    }
+                }
+            }
+            if (jsonStr) {
+                eval("dataArr = " + jsonStr + ";");
+            }
+        }
+    } catch (e) {}
+
+    var epData = null;
+    if (dataArr && Array.isArray(dataArr)) {
+        for (var idx = 0; idx < dataArr.length; idx++) {
+            if (dataArr[idx] && dataArr[idx].data && dataArr[idx].data.episode) {
+                epData = dataArr[idx].data.episode;
+                break;
+            }
+        }
     }
 
-    // 4. Parse thể loại
-    var genres = [];
-    doc.select("a[href*='/genres/']").forEach(function(el) {
-        var gTitle = el.text().trim();
-        var gHref = el.attr("href") + "";
-        if (gTitle && gHref) {
-            genres.push({
-                title: gTitle,
-                input: normalizeUrl(gHref),
-                script: "gen.js"
+    if (epData) {
+        episodeId = epData.id || "";
+        name = (epData.title || "").replace(/\s*-\s*Tập\s*\d+.*$/i, "").replace(/\s*Tập\s*\d+.*$/i, "").trim();
+        description = (epData.description || "").replace(/<[^>]*>?/gm, '').trim();
+
+        // Image logic: posterImage > backdropImage > thumbnailImage
+        var imgObj = epData.posterImage || epData.backdropImage || epData.thumbnailImage;
+        if (imgObj && imgObj.filePath) {
+            cover = IMAGE_URL + imgObj.filePath;
+        }
+
+        if (epData.studios && epData.studios.length > 0 && epData.studios[0].studio) {
+            author = epData.studios[0].studio.name || "HentaiZ";
+        }
+
+        if (epData.genres && epData.genres.length > 0) {
+            epData.genres.forEach(function (g) {
+                if (g.genre) {
+                    genres.push({
+                        title: g.genre.name,
+                        input: BASE_URL + "/genres/" + g.genre.slug + "/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+                        script: "gen.js"
+                    });
+                }
             });
         }
-    });
+    }
 
-    // 5. Cào danh sách tập phim (TOC) từ DOM đã render
+    // Fallback nếu không parse được qua JSON
+    if (!name) {
+        var doc = Html.parse(html);
+        var rawName = doc.select("h2").first() ? doc.select("h2").first().text() + "" : "";
+        name = rawName.replace(/\s*-\s*Tập\s*\d+.*$/i, "").replace(/\s*Tập\s*\d+.*$/i, "").trim() || slug;
+        if (!description) {
+            description = doc.select(".pointer-events-auto p").text() + "";
+            if (!description) description = doc.select(".line-clamp-3").text() + "";
+        }
+        var studioEl = doc.select("a[href*='/studios/']").first();
+        if (studioEl) author = studioEl.text().trim();
+
+        if (genres.length === 0) {
+            doc.select("a[href*='/genres/']").forEach(function(el) {
+                var gTitle = el.text().trim();
+                var gHref = el.attr("href") + "";
+                if (gTitle && gHref) {
+                    genres.push({
+                        title: gTitle,
+                        input: normalizeUrl(gHref) + "/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+                        script: "gen.js"
+                    });
+                }
+            });
+        }
+    }
+
+    // 3. Gọi API getSeriesEpisodes lấy TOC và bổ sung cover
     var episodesList = [];
-    doc.select(".divide-y a[href*='/watch/']").forEach(function(el) {
-        var epTitle = el.select("span").text() || el.text() || "";
-        var epHref = el.attr("href") + "";
-        if (epHref) {
-            episodesList.push({
-                name: epTitle.trim(),
-                url: normalizeUrl(epHref),
-                host: BASE_URL
-            });
-        }
-    });
+    var hash = "1edhnia"; // hash mặc định
+    var hashMatch = html.match(/\/remote\/([a-zA-Z0-9_-]+)\/getSeriesEpisodes/);
+    if (hashMatch) { hash = hashMatch[1]; }
 
-// 6. Gọi API getSeriesEpisodes để lấy thông tin cover trực tiếp (giống hentaizhot)
-var cover = "";
-var hash = "1edhnia"; // hash mặc định (cùng với hentaizhot)
-var hashMatch = html.match(/\/remote\/([a-zA-Z0-9_-]+)\/getSeriesEpisodes/);
-if (hashMatch) { hash = hashMatch[1]; }
+    try {
+        load("crypto.js");
+        var payload = CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(JSON.stringify([{ "currentSlug": 1 }, slug])));
+        var apiUrl = BASE_URL + "/_app/remote/" + hash + "/getSeriesEpisodes?payload=" + encodeURIComponent(payload);
 
-try {
-    load("crypto.js");
-    var payload = CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(JSON.stringify([{ "currentSlug": 1 }, slug])));
-    var apiUrl = BASE_URL + "/_app/remote/" + hash + "/getSeriesEpisodes?payload=" + encodeURIComponent(payload);
+        var apiRes = fetch(apiUrl, { headers: { "User-Agent": UserAgent.android() } });
+        if (apiRes && apiRes.ok) {
+            var apiData = JSON.parse(apiRes.text() + "");
+            var svelteData = apiData.result || apiData.data || null;
 
-    var apiRes = fetch(apiUrl, { headers: { "User-Agent": UserAgent.android() } });
-    if (apiRes && apiRes.ok) {
-        var apiData = JSON.parse(apiRes.text() + "");
-        var svelteData = apiData.result || apiData.data || null;
+            if (svelteData) {
+                // ① Bổ sung cover nếu chưa có
+                if (!cover) {
+                    if (svelteData.posterImage && svelteData.posterImage.filePath) {
+                        cover = IMAGE_URL + svelteData.posterImage.filePath;
+                    } else if (svelteData.backdropImage && svelteData.backdropImage.filePath) {
+                        cover = IMAGE_URL + svelteData.backdropImage.filePath;
+                    } else if (svelteData.thumbnailImage && svelteData.thumbnailImage.filePath) {
+                        cover = IMAGE_URL + svelteData.thumbnailImage.filePath;
+                    }
+                }
 
-        if (svelteData) {
-            // ① Lấy cover trực tiếp từ episode object (poster/backdrop/thumbnail)
-            if (svelteData.posterImage && svelteData.posterImage.filePath) {
-                cover = IMAGE_URL + svelteData.posterImage.filePath;
-            } else if (svelteData.backdropImage && svelteData.backdropImage.filePath) {
-                cover = IMAGE_URL + svelteData.backdropImage.filePath;
-            } else if (svelteData.thumbnailImage && svelteData.thumbnailImage.filePath) {
-                cover = IMAGE_URL + svelteData.thumbnailImage.filePath;
-            }
-
-            // ② Nếu không có cover, fallback bằng regex trên chuỗi JSON
-            if (!cover) {
-                var matchCover = JSON.stringify(svelteData).match(/\/202[0-9]\/[0-9]{2}\/[a-zA-Z0-9-]+\.(?:jpg|png|webp)/i);
-                if (matchCover) { cover = normalizeCoverUrl(matchCover[0]); }
-            }
-
-            // ③ Nếu danh sách tập phim rỗng, dùng parseSvelteTable như trước
-            if (episodesList.length === 0) {
+                // ② Giải mã TOC
                 episodesList = parseSvelteTable(svelteData);
             }
         }
-    }
-} catch (e) {
-    // Bỏ qua lỗi API, duy trì fallback hiện tại
-}    
+    } catch (e) {}
 
-    // Fallback: Tìm ảnh bìa từ SvelteKit hydration data trong HTML nếu API không trả về
-    if (!cover) {
-        doc.select("script").forEach(function(s) {
-            var text = s.html() + "";
-            if (text.indexOf("filePath") !== -1 || text.indexOf("backdropImage") !== -1) {
-                text = decodeSvelteKitString(text);
-                var fileMatch = text.match(/filePath\s*:\s*["']([^"']+)["']/);
-                if (fileMatch) {
-                    cover = normalizeCoverUrl(fileMatch[1]);
-                }
+    // Fallback cào DOM TOC nếu API rỗng
+    if (episodesList.length === 0) {
+        var doc = Html.parse(html);
+        doc.select(".divide-y a[href*='/watch/']").forEach(function(el) {
+            var epTitle = el.select("span").text() || el.text() || "";
+            var epHref = el.attr("href") + "";
+            if (epHref) {
+                episodesList.push({
+                    name: epTitle.trim(),
+                    url: normalizeUrl(epHref),
+                    host: BASE_URL
+                });
             }
         });
     }
 
-    // Nếu vẫn rỗng tập, thêm tập hiện tại làm tập đơn
     if (episodesList.length === 0) {
         episodesList.push({
             name: "Xem phim",
@@ -161,61 +196,33 @@ try {
         });
     }
 
-    // Lưu cache danh sách tập phim cuối cùng để toc.js đọc offline tức thì
+    // Cache TOC để toc.js đọc offline tức thì
     cacheStorage.setItem("cached_toc_" + slug, JSON.stringify(episodesList));
 
-    // 7. Tạo danh sách phim liên quan
+    // 4. Tạo gợi ý đề xuất qua API getSuggestedEpisodes
     var suggests = [];
-    var suggestHtml = doc.select(".space-y-3").html() + "";
-    if (suggestHtml) {
+    if (hash && episodeId) {
+        try {
+            var suggestPayload = CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(JSON.stringify([
+                { "currentId": 1, "excludeIds": 2 }, episodeId, []
+            ])));
+            suggests.push({
+                title: "Phim đề xuất",
+                input: BASE_URL + "/_app/remote/" + hash + "/getSuggestedEpisodes?payload=" + encodeURIComponent(suggestPayload),
+                script: "suggest.js"
+            });
+        } catch (e) {}
+    }
+    if (suggests.length === 0) {
+        // Fallback dùng tên phim để search gợi ý
         suggests.push({
             title: "Phim đề xuất",
-            input: suggestHtml,
-            script: "suggest.js"
+            input: name,
+            script: "search.js"
         });
     }
 
-    // 8. Trích xuất episodeId từ SvelteKit JSON data nhúng trong HTML thô để hiển thị bình luận
-    var episodeId = "";
-    var dataMatch = html.match(/data:\s*(\[[\s\S]*?\])\s*,\s*uses:/);
-    if (!dataMatch) {
-        dataMatch = html.match(/data:\s*(\[[\s\S]*?\])/);
-    }
-    if (dataMatch) {
-        try {
-            var jsonStr = "";
-            var startIdx = html.indexOf('data:');
-            if (startIdx !== -1) {
-                var bracketCount = 0;
-                var started = false;
-                for (var i = startIdx; i < html.length; i++) {
-                    var char = html.charAt(i);
-                    if (char === '[') {
-                        bracketCount++;
-                        started = true;
-                    }
-                    if (started) {
-                        jsonStr += char;
-                    }
-                    if (char === ']') {
-                        bracketCount--;
-                        if (bracketCount === 0 && started) {
-                            break;
-                        }
-                    }
-                }
-                var dataArr = [];
-                eval("dataArr = " + jsonStr + ";");
-                for (var idx = 0; idx < dataArr.length; idx++) {
-                    if (dataArr[idx] && dataArr[idx].data && dataArr[idx].data.episode) {
-                        episodeId = dataArr[idx].data.episode.id || "";
-                        break;
-                    }
-                }
-            }
-        } catch (e) {}
-    }
-
+    // 5. Bình luận
     var comments = undefined;
     if (episodeId) {
         var commentHash = "1edhnia";
@@ -234,7 +241,7 @@ try {
         name: name,
         host: BASE_URL,
         author: author,
-        description: description.trim(),
+        description: description,
         ongoing: true,
         genres: genres.length > 0 ? genres : undefined,
         suggests: suggests.length > 0 ? suggests : undefined,
