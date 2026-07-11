@@ -204,20 +204,55 @@ function execute(url) {
     // Lưu cache danh sách tập phim cuối cùng để toc.js đọc offline tức thì
     cacheStorage.setItem("cached_toc_" + slug, JSON.stringify(episodesList));
 
-    // 7. Tạo danh sách phim liên quan bằng cách parse HTML thô tải về (JSoup offline)
+    // 7. Gọi API getSuggestedEpisodes để lấy danh sách phim gợi ý (phim đề xuất)
     var suggests = [];
-    var doc = Html.parse(html);
-    var suggestHtml = doc.select(".space-y-3").html() + "";
-    if (suggestHtml) {
-        suggests.push({
-            title: "Phim đề xuất",
-            input: suggestHtml,
-            script: "suggest.js"
-        });
+    var episodeId = epData.id || "";
+    var suggestHash = hash; // Sử dụng hash thu được từ trang watch
+    var suggestHashMatch = html.match(/\/remote\/([a-zA-Z0-9_-]+)\/getSuggestedEpisodes/);
+    if (suggestHashMatch) {
+        suggestHash = suggestHashMatch[1];
+    }
+
+    if (episodeId) {
+        try {
+            var suggestPayload = CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(JSON.stringify([ [ "__skrao", 1 ], { "currentId": 2, "excludeIds": 3 }, episodeId, [] ])));
+            var suggestApiUrl = BASE_URL + "/_app/remote/" + suggestHash + "/getSuggestedEpisodes?payload=" + encodeURIComponent(suggestPayload);
+            
+            var suggestRes = fetch(suggestApiUrl, {
+                headers: {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                }
+            });
+            if (suggestRes && suggestRes.ok) {
+                var suggestData = JSON.parse(suggestRes.text() + "");
+                var svelteSuggest = null;
+                if (suggestData.data) {
+                    if (typeof suggestData.data === 'string') {
+                        try {
+                            svelteSuggest = JSON.parse(suggestData.data);
+                        } catch (e) {}
+                    } else {
+                        svelteSuggest = suggestData.data;
+                    }
+                }
+                if (!svelteSuggest) {
+                    svelteSuggest = suggestData.result;
+                }
+
+                if (svelteSuggest) {
+                    suggests.push({
+                        title: "Phim đề xuất",
+                        input: JSON.stringify(svelteSuggest),
+                        script: "suggest.js"
+                    });
+                }
+            }
+        } catch (e) {
+            // Lỗi lấy API gợi ý thì bỏ qua
+        }
     }
 
     // 8. Trích xuất episodeId để hiển thị bình luận
-    var episodeId = epData.id || "";
     var comments = undefined;
     if (episodeId) {
         var commentHash = "1edhnia";
