@@ -32,18 +32,35 @@ function parseCards(doc, selector) {
         if (added[link]) return;
         added[link] = true;
 
-        var title = e.select("h4").text() + "";
-        var textLines = (e.text() + "").split('\n').map(function(t) { return t.trim(); }).filter(function(t) { return t !== ''; });
+        var title = e.select("h3, h2, h4").text() + "";
         if (!title) {
-            title = textLines[1] ? textLines[1] : (textLines[0] ? textLines[0] : "");
+            title = img.attr("alt") + "";
         }
-        var cover = img.attr("src") + "" || img.attr("data-src") + "" || img.attr("data-srcset") + "";
-        var episode = textLines[0] ? textLines[0] : "";
+        title = title.trim();
+        if (!title) return;
+
+        var cover = img.attr("src") || img.attr("data-src") || img.attr("data-srcset") || "";
+        cover = normalizeCoverUrl(cover);
+
+        var episode = "";
+        e.select("span, div, p").forEach(function(el) {
+            var txt = el.text() + "";
+            if (txt.indexOf("Tập") !== -1 || txt.indexOf("Full") !== -1) {
+                episode = txt;
+            }
+        });
+        
+        if (!episode) {
+            var descNode = e.select("p").first();
+            if (descNode) {
+                episode = descNode.text();
+            }
+        }
 
         list.push({
-            name: title.trim(),
+            name: title,
             link: link,
-            cover: normalizeCoverUrl(cover),
+            cover: cover,
             description: episode.trim(),
             host: BASE_URL
         });
@@ -51,50 +68,4 @@ function parseCards(doc, selector) {
     return list;
 }
 
-function parseSvelteKitData(html) {
-    var dataMatch = (html + "").match(/data:\s*(\[[\s\S]*?\]),\s*form:/);
-    if (dataMatch) {
-        try {
-            return eval(dataMatch[1]);
-        } catch (e) {}
-    }
-    return null;
-}
-
-function parseEpisodes(obj) {
-    var list = [];
-    if (!obj || !Array.isArray(obj)) return list;
-    
-    var episodes = null;
-    for (var i = 0; i < obj.length; i++) {
-        if (obj[i] && obj[i].data && obj[i].data.episodes) {
-            episodes = obj[i].data.episodes;
-            break;
-        }
-    }
-
-    if (!episodes || !Array.isArray(episodes)) return list;
-
-    episodes.forEach(function(ep) {
-        if (!ep) return;
-        var name = ep.title ? ep.title + "" : "";
-        if (ep.episodeNumber) {
-            name += " - Tập " + ep.episodeNumber;
-        }
-        var link = BASE_URL + "/watch/" + ep.slug;
-        var coverPath = ep.posterImage ? (ep.posterImage.filePath || "") + "" : "";
-        var cover = normalizeCoverUrl(coverPath);
-        var description = ep.studios && ep.studios.length > 0 && ep.studios[0].studio ? ep.studios[0].studio.name + "" : "";
-
-        list.push({
-            name: name.trim(),
-            link: link,
-            cover: cover,
-            description: description.trim(),
-            host: BASE_URL
-        });
-    });
-
-    return list;
-}
 

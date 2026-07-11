@@ -13,18 +13,29 @@ function execute(url, page) {
         }
     }
 
-    var res = fetch(fetchUrl, { headers: { "User-Agent": UserAgent.chrome() } });
-    if (res && res.ok) {
-        var html = res.text();
-        var svelteData = parseSvelteKitData(html);
-        if (svelteData) {
-            var list = parseEpisodes(svelteData);
-            if (list.length > 0) {
-                var hasNext = list.length >= 12;
-                var next = hasNext ? (parseInt(page) + 1).toString() : null;
+    var b = Engine.newBrowser();
+    var doc = null;
+    try {
+        b.setUserAgent(UserAgent.chrome());
+        b.launchAsync(fetchUrl);
 
-                return Response.success(list, next);
-            }
+        // Chờ SvelteKit render Client-side JS
+        for (var j = 0; j < 10; j++) {
+            sleep(750);
+            doc = b.html();
+            if (doc && doc.select('a[href*="/watch/"] img').size() > 0) break;
+        }
+    } finally {
+        b.close();
+    }
+
+    if (doc) {
+        var list = parseCards(doc);
+        if (list.length > 0) {
+            var hasNext = list.length >= 12;
+            var next = hasNext ? (parseInt(page) + 1).toString() : null;
+
+            return Response.success(list, next);
         }
     }
     
