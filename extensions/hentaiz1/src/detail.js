@@ -30,13 +30,32 @@ function execute(url) {
     var rawName = doc.select("h2").first() ? doc.select("h2").first().text() + "" : "";
     var name = rawName.replace(/\s*-\s*Tập\s*\d+.*$/i, "").replace(/\s*Tập\s*\d+.*$/i, "").trim();
 
-    // 2. Parse ảnh bìa
+    // 2. Trích xuất dữ liệu SvelteKit JSON ẩn nhúng trong HTML thô
+    var episodeId = "";
     var cover = "";
-    var imgEl = doc.select("img[src*='storage.haiten.org']").first() || doc.select("img").first();
-    if (imgEl) {
-        cover = imgEl.attr("src") || imgEl.attr("data-src") || "";
+    var dataMatch = html.match(/data:\s*(\[[\s\S]*?\])\s*,\s*uses:/);
+    if (!dataMatch) {
+        dataMatch = html.match(/data:\s*(\[[\s\S]*?\])/);
     }
-    cover = normalizeCoverUrl(cover);
+    if (dataMatch) {
+        try {
+            var dataArr = [];
+            eval("dataArr = " + dataMatch[1] + ";");
+            for (var i = 0; i < dataArr.length; i++) {
+                if (dataArr[i] && dataArr[i].data && dataArr[i].data.episode) {
+                    var epData = dataArr[i].data.episode;
+                    episodeId = epData.id || "";
+                    
+                    // Lấy ảnh bìa chính chủ từ JSON nếu có
+                    var imgObj = epData.posterImage || epData.backdropImage || epData.thumbnailImage;
+                    if (imgObj && imgObj.filePath) {
+                        cover = normalizeCoverUrl(imgObj.filePath);
+                    }
+                    break;
+                }
+            }
+        } catch (e) {}
+    }
 
     // 3. Parse mô tả
     var description = doc.select(".pointer-events-auto p").text() + "";
@@ -90,25 +109,6 @@ function execute(url) {
             input: suggestHtml,
             script: "suggest.js"
         });
-    }
-
-    // 8. Trích xuất episodeId từ SvelteKit JSON data nhúng trong HTML thô để hiển thị bình luận
-    var episodeId = "";
-    var dataMatch = html.match(/data:\s*(\[[\s\S]*?\])\s*,\s*uses:/);
-    if (!dataMatch) {
-        dataMatch = html.match(/data:\s*(\[[\s\S]*?\])/);
-    }
-    if (dataMatch) {
-        try {
-            var dataArr = [];
-            eval("dataArr = " + dataMatch[1] + ";");
-            for (var i = 0; i < dataArr.length; i++) {
-                if (dataArr[i] && dataArr[i].data && dataArr[i].data.episode) {
-                    episodeId = dataArr[i].data.episode.id || "";
-                    break;
-                }
-            }
-        } catch (e) {}
     }
 
     var comments = undefined;
