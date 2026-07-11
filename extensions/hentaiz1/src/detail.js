@@ -253,11 +253,17 @@ function execute(url) {
 
     // 5. Bình luận
     var comment = undefined;
+    var comments = undefined;
     if (episodeId) {
         comment = {
             input: episodeId,
             script: "comment.js"
         };
+        comments = [{
+            title: "Bình luận",
+            input: episodeId,
+            script: "comment.js"
+        }];
     }
 
     var responseObj = {
@@ -268,7 +274,8 @@ function execute(url) {
         ongoing: true,
         genres: genres.length > 0 ? genres : undefined,
         suggests: suggests.length > 0 ? suggests : undefined,
-        comment: comment
+        comment: comment,
+        comments: comments
     };
 
     if (cover) {

@@ -35,7 +35,7 @@ function execute(input, page) {
     if (res && res.ok) {
         var text = res.text();
         var root = JSON.parse(text + "");
-        var svelteData = root.result || (root.data && root.data.result);
+        var svelteData = root.result || (root.data && root.data.result) || root.data;
         if (svelteData) {
             var table = [];
             try { eval("table = " + svelteData + ";"); } catch (e) { }
