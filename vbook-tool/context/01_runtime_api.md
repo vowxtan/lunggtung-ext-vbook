@@ -224,6 +224,9 @@ localCookie.setCookie("a=b; path=/");
 localCookie.getCookie();
 
 localConfig.getItem(key);
+
+> ⚠️ `cacheStorage` chỉ khả dụng trên VBook phiên bản mới.
+> Luôn kiểm tra `typeof cacheStorage !== "undefined"` trước khi sử dụng.
 ```
 
 ## WebSocket API

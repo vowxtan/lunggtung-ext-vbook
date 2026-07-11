@@ -4,7 +4,7 @@
     "author": "TODO_AUTHOR",
     "version": 1,
     "source": "https://TODO_DOMAIN.net",
-    "regexp": "https?:\\/\\/(?:www\\\\.)?TODO_DOMAIN\\\\.net\\/(?:phim|video)\\/[a-zA-Z0-9-]+\\\/?$",
+    "regexp": "https?:\\/\\/(?:www\\.)?TODO_DOMAIN\\.net\\/(?:phim|video)\\/[a-zA-Z0-9-]+\\/?$",
     "description": "Demo video extension template",
     "locale": "vi_VN",
     "language": "javascript",
@@ -15,8 +15,10 @@
     "genre": "genre.js",
     "detail": "detail.js",
     "search": "search.js",
+    "suggest": "suggest.js",
     "toc": "toc.js",
     "chap": "chap.js",
-    "track": "track.js"
+    "track": "track.js",
+    "comment": "comment.js"
   }
 }

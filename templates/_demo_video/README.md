@@ -12,6 +12,7 @@ Bản mẫu chuẩn dành cho các tiện ích xem phim / video.
     -   `detail.js`: Đảm bảo trả về `format: "series"`.
     -   `chap.js`: Trả về danh sách các Server/Nguồn.
     -   `track.js`: Xử lý bóc tách link video thực tế (native hoặc auto/M3U8).
+    -   `comment.js`: Cấu hình API bình luận nếu site hỗ trợ.
 3.  **Kiểm tra**: `vbook validate && vbook test-all`
 4.  **Phát hành**: `vbook publish --my`
 
@@ -28,6 +29,8 @@ Bản mẫu chuẩn dành cho các tiện ích xem phim / video.
 - `src/toc.js` — episode list (returns episode links & section headers)
 - `src/chap.js` — returns list of streams/servers
 - `src/track.js` — handles final media URL extraction (native/auto)
+- `src/suggest.js` — phim đề xuất / related videos
+- `src/comment.js` — bình luận (optional)
 
 ## Video Playback Flow
 

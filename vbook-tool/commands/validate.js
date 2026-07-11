@@ -220,6 +220,10 @@ function runValidation(targetPath) {
                 addWarn(`Missing recommended script: ${baseName} (required for type "${meta.type}")`);
             }
         }
+    } else if (meta.type === 'video') {
+        if (!scripts['track']) {
+            addWarn(`Missing recommended script: track (required for video type)`);
+        }
     } else if (REQUIRED_BY_TYPE[meta.type]) {
         for (const req of REQUIRED_BY_TYPE[meta.type]) {
             const baseName = req.replace('.js', '');

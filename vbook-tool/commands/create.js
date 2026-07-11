@@ -163,7 +163,8 @@ function execute(key, page) {
 function templateDetail(source) {
     return `// detail.js — Book detail page
 // Contract: execute(url) → {name*, cover, host, author, description, detail, ongoing:bool*,
-//                           genres?:[{title,input,script}], suggests?:[{title,input,script}]}
+//                           genres?:[{title,input,script}], suggests?:[{title,input,script}],
+//                           comment?:{input,script}}
 function execute(url) {
     // NOTE: App strips trailing / from URL — re-add if needed
     let response = fetch(url);
@@ -209,6 +210,11 @@ function execute(url) {
         });
     }
     
+    // Comment (optional) — chỉ thêm nếu site có API bình luận
+    var comment = undefined;
+    // Nếu có episode/comment ID, dùng:
+    // comment = { input: "commentId", script: "comment.js" };
+
     return Response.success({
         name: name,
         cover: cover || "",
@@ -218,20 +224,77 @@ function execute(url) {
         detail: "Tác giả: " + author + "<br>Trạng thái: " + status,
         ongoing: ongoing,
         genres: genres,
-        suggests: suggests
+        suggests: suggests,
+        comment: comment  // object đơn, KHÔNG phải mảng
     });
 }
 `;
 }
 
+function templateTrack(source) {
+    return `// track.js — Xử lý URL stream cho video
+// Contract: execute(url) → { data*, type*, headers?:Object, host?:string, timeSkip?:[{startTime, endTime}] }
+function execute(url) {
+    url = url.replace(/^(?:https?:\\/\\/)?(?:[^@\\n]+@)?(?:www\\.)?([^:\\/\\n?]+)/, "${source}");
+    
+    if (url.indexOf(".mp4") !== -1 || url.indexOf(".m3u8") !== -1 || url.indexOf(".m3u9") !== -1) {
+        return Response.success({
+            data: url,
+            type: "native",
+            headers: { "User-Agent": "Mozilla/5.0", "Referer": "${source}/" },
+            host: "${source}",
+            timeSkip: []
+        });
+    }
+    
+    return Response.success({
+        data: url,
+        type: "auto",
+        headers: { "User-Agent": "Mozilla/5.0", "Referer": "${source}/" },
+        host: "${source}",
+        timeSkip: []
+    });
+}
+`;
+}
+
+function templateSuggest(source) {
+    return `// suggest.js — Phim/truyện đề xuất
+// Contract: execute(input) → [{ name*, link*, cover?, description?, host? }]
+function execute(input) {
+    var res = fetch(input, { headers: { "User-Agent": UserAgent.chrome() } });
+    if (!res.ok) return Response.error("Lỗi: " + res.status);
+
+    // TODO: Parse danh sách đề xuất từ HTML hoặc JSON API
+    var items = [];
+
+    return Response.success(items);
+}
+`;
+}
+
+function templateComment(source) {
+    return `// comment.js — Bình luận
+// Contract: execute(input, page) → [{ name*, content*, avatar?, description? }], nextPage?
+function execute(input, page) {
+    if (!page) page = "1";
+    if (!input) return Response.success([]);
+
+    // TODO: Gọi API lấy danh sách bình luận
+    // var res = fetch(url, { headers: { "User-Agent": UserAgent.chrome() } });
+    // if (!res || !res.ok) return Response.error("Không tải được bình luận");
+
+    return Response.error("comment.js chưa được cấu hình cho site này");
+}
+`;
+}
+
 function templatePage(source) {
-    return `// page.js — Trách nhiệm: Nhận URL của trang detail, trả về mảng URL cho toc.js
+    return `// page.js — Nhận URL của trang detail, trả về mảng URL cho toc.js
 // Contract: execute(url) → [urlString, ...]
 // Nếu không có phân trang mục lục: trả về [url] (chính là url detail)
-// Nếu có phân trang: trả về mảng URL từng trang mục lục
-// toc.js sẽ được gọi lần lượt với từng URL trong mảng này
 function execute(url) {
-    url = url.replace(/^(?:https?:\/\/)?(?:www\.)?([^\/]+)/, "${source}");
+    url = url.replace(/^(?:https?:\\/\\/)?(?:www\\.)?([^\\/]+)/, "${source}");
     if (url.slice(-1) === "/") url = url.slice(0, -1);
     
     let response = fetch(url);
@@ -240,8 +303,6 @@ function execute(url) {
     let doc = response.html();
     let pages = [];
     
-    // TODO: Nếu site có phân trang mục lục, cập nhật selector dưới đây
-    // Ví dụ: ".pagination a", ".page-list a", "a[href*='trang/']"
     doc.select(".pagination a, .page-list a").forEach(function(el) {
         let href = el.attr("href") + "";
         if (href && !href.includes("#")) {
@@ -250,9 +311,7 @@ function execute(url) {
         }
     });
     
-    // Phân trang không tìm thấy hoặc không có → trả về [url] để toc.js tự parse
     if (pages.length === 0) return Response.success([url]);
-    
     return Response.success(pages);
 }
 `;
@@ -511,9 +570,12 @@ function register(program) {
                     // Fallback to legacy hardcoded templates
                     // Decide which scripts to create
                     // page.js là bắt buộc — luôn tạo, kể cả khi minimal
+                    const isVideo = options.type === 'video';
                     const scripts = options.minimal
                         ? ['detail.js', 'page.js', 'toc.js', 'chap.js']
-                        : ['home.js', 'gen.js', 'search.js', 'detail.js', 'page.js', 'toc.js', 'chap.js'];
+                        : isVideo
+                            ? ['home.js', 'gen.js', 'search.js', 'detail.js', 'page.js', 'toc.js', 'chap.js', 'track.js', 'suggest.js', 'comment.js']
+                            : ['home.js', 'gen.js', 'search.js', 'detail.js', 'page.js', 'toc.js', 'chap.js'];
 
                     // Create directories
                     fs.mkdirSync(srcDir, { recursive: true });
@@ -530,13 +592,16 @@ function register(program) {
 
                     // Create script files
                     const templateMap = {
-                        'home.js':   () => templateHome(source),
-                        'gen.js':    () => templateGen(source),
-                        'search.js': () => templateSearch(source),
-                        'detail.js': () => templateDetail(source),
-                        'page.js':   () => templatePage(source),
-                        'toc.js':    () => templateToc(source),
-                        'chap.js':   () => templateChap(source),
+                        'home.js':     () => templateHome(source),
+                        'gen.js':      () => templateGen(source),
+                        'search.js':   () => templateSearch(source),
+                        'detail.js':   () => templateDetail(source),
+                        'page.js':     () => templatePage(source),
+                        'toc.js':      () => templateToc(source),
+                        'chap.js':     () => templateChap(source),
+                        'track.js':    () => templateTrack(source),
+                        'suggest.js':  () => templateSuggest(source),
+                        'comment.js':  () => templateComment(source),
                     };
 
                     for (const s of scripts) {

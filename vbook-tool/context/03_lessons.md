@@ -20,6 +20,9 @@ Keep this file short. Add only reusable lessons that change future decisions.
 14. Account/password APIs may still require OTP or session cookies. Add config fields for credentials, but do not invent an OTP bypass; cache/use real tokens or cookies only when the API returns them.
 15. `plugin.json.config` keys become VBook script globals. Primitive config flags are valid. Object config fields need `title`, `mode`, and `format`; `default` is optional and should match the format when present.
 16. `translate` and `tts` extensions do not use novel/comic detail-page selectors. Use `language.js`/`translate.js` and `voice.js`/`tts.js` contracts, with primitive config flags such as `max_length`, `required_api_key`, and `support_url`.
+17. `detail.js` returns `comment` (object `{input, script}`), NOT `comments` (array). Returning both causes duplicate comment UI in VBook.
+18. `cacheStorage` is available on newer VBook versions only. Always guard `typeof cacheStorage !== "undefined"` before using.
+19. SvelteKit devalue parsing: API returns `{type: "data", data: "[devalue string]"}`. Parse with `eval("table = " + svelteData + ";")`. Fallback order: `root.result || (root.data && root.data.result) || root.data`.
 
 ## Hard Site Notes
 

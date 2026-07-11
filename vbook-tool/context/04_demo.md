@@ -20,7 +20,9 @@ extensions/<name>/
    ├─ toc.js       required
    ├─ chap.js      required
    ├─ suggests.js  optional recommended-book list
-   └─ track.js     required for video
+   ├─ track.js     required for video
+   ├─ suggest.js   optional recommend list
+   └─ comment.js   optional comment list
 ```
 
 Translate extensions use this smaller contract:
@@ -83,13 +85,14 @@ Rules:
 | `genre.js` | `execute()` | `[{title, input, script}]` |
 | `gen.js` | `execute(url, page)` | `[{name, link, cover, host}], nextPage` |
 | `search.js` | `execute(key, page)` | `[{name, link, cover, host}], nextPage` |
-| `detail.js` | `execute(url)` | `{name, cover, host, author, description, detail, ongoing, genres?, suggests?, comments?}` |
+| `detail.js` | `execute(url)` | `{name, cover, host, author, description, detail, ongoing, genres?, suggests?, comment?}` |
 | `suggests.js` | `execute(input)` | `[{name, link, cover, description?, host, tag?}]` |
 | `page.js` novel/comic/chinese_novel | `execute(url)` | `[urlString, ...]` |
 | `toc.js` | `execute(url)` | `[{name, url, host, pay?}]` |
 | `chap.js` novel/comic | `execute(url)` | HTML string |
 | `chap.js` video | `execute(url)` | `[{title, data}]` |
 | `track.js` video | `execute(url)` | `{data, type, headers?, host?, timeSkip?}` |
+| `comment.js` video | `execute(input, page)` | `[{name, content, avatar?, description?}], nextPage` |
 | `language.js` translate | `execute()` | `[{id}, ...]` |
 | `translate.js` translate | `execute(text, from, to, apiKey)` | translated string |
 | `voice.js` TTS | `execute()` | `[{id, language}, ...]` |
@@ -105,6 +108,12 @@ detail.suggests -> suggests -> detail -> page -> toc -> chap
 video: chap -> track
 translate: language -> translate
 tts: voice -> tts
+```
+
+Comment flow:
+
+```text
+detail.comment -> comment
 ```
 
 ## Translate Config
