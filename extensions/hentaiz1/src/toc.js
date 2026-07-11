@@ -2,23 +2,26 @@ load('config.js');
 
 function execute(url) {
     url = normalizeUrl(url);
-    var res = fetch(url);
-    if (!res.ok) {
-        // Fallback dùng Browser
-        var browser = Engine.newBrowser();
-        try {
-            var doc = browser.launch(url, 8000);
-            if (doc) {
-                return parseTOC(url, doc);
-            }
-        } finally {
-            browser.close();
+    var b = Engine.newBrowser();
+    var doc = null;
+    try {
+        b.setUserAgent(UserAgent.chrome());
+        b.launchAsync(url);
+
+        // Chờ SvelteKit render danh sách các tập phim (Các tập khác)
+        for (var j = 0; j < 10; j++) {
+            sleep(750);
+            doc = b.html();
+            if (doc && doc.select("a[href*='/watch/']").size() > 0) break;
         }
-        return Response.error("Cannot load: " + res.status);
+    } finally {
+        b.close();
     }
 
-    var doc = res.html();
-    return parseTOC(url, doc);
+    if (doc && doc.select("a[href*='/watch/']").size() > 0) {
+        return parseTOC(url, doc);
+    }
+    return Response.error("Không thể tải danh sách tập phim: " + url);
 }
 
 function parseTOC(url, doc) {

@@ -2,24 +2,26 @@ load('config.js');
 
 function execute(url) {
     url = normalizeUrl(url);
+    var b = Engine.newBrowser();
+    var doc = null;
+    try {
+        b.setUserAgent(UserAgent.chrome());
+        b.launchAsync(url);
 
-    var res = fetch(url);
-    if (!res.ok) {
-        // Fallback dùng Browser nếu fetch thông thường bị Cloudflare chặn
-        var browser = Engine.newBrowser();
-        try {
-            var doc = browser.launch(url, 8000);
-            if (doc) {
-                return parseDetail(doc);
-            }
-        } finally {
-            browser.close();
+        // Chờ SvelteKit render chi tiết phim
+        for (var j = 0; j < 10; j++) {
+            sleep(750);
+            doc = b.html();
+            if (doc && doc.select("h2").size() > 0) break;
         }
-        return Response.error("Cannot load: " + res.status);
+    } finally {
+        b.close();
     }
 
-    var doc = res.html();
-    return parseDetail(doc);
+    if (doc && doc.select("h2").size() > 0) {
+        return parseDetail(doc);
+    }
+    return Response.error("Không thể tải chi tiết phim: " + url);
 }
 
 function parseDetail(doc) {

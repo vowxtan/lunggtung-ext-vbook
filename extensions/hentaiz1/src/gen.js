@@ -13,20 +13,23 @@ function execute(url, page) {
         }
     }
 
-    var res = fetch(fetchUrl, { headers: { "User-Agent": UserAgent.chrome() } });
+    var b = Engine.newBrowser();
     var doc = null;
-    if (res && res.ok) {
-        doc = res.html();
-    } else {
-        var browser = Engine.newBrowser();
-        try {
-            doc = browser.launch(fetchUrl, 8000);
-        } finally {
-            browser.close();
+    try {
+        b.setUserAgent(UserAgent.chrome());
+        b.launchAsync(fetchUrl);
+
+        // Chờ SvelteKit render Client-side JS
+        for (var j = 0; j < 10; j++) {
+            sleep(750);
+            doc = b.html();
+            if (doc && doc.select('a[href*="/watch/"]').size() > 0) break;
         }
+    } finally {
+        b.close();
     }
 
-    if (doc) {
+    if (doc && doc.select('a[href*="/watch/"]').size() > 0) {
         var list = parseCards(doc);
         
         // Nếu số lượng card lấy được >= 12, giả định có trang tiếp theo
@@ -35,5 +38,6 @@ function execute(url, page) {
 
         return Response.success(list, next);
     }
-    return Response.error("Không thể tải trang: " + fetchUrl);
+    
+    return Response.error("Không thể tải danh sách phim từ: " + fetchUrl);
 }

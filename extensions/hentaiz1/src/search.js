@@ -10,20 +10,23 @@ function execute(key, page) {
         searchUrl += "&page=" + page;
     }
 
-    var res = fetch(searchUrl, { headers: { "User-Agent": UserAgent.chrome() } });
+    var b = Engine.newBrowser();
     var doc = null;
-    if (res && res.ok) {
-        doc = res.html();
-    } else {
-        var browser = Engine.newBrowser();
-        try {
-            doc = browser.launch(searchUrl, 8000);
-        } finally {
-            browser.close();
+    try {
+        b.setUserAgent(UserAgent.chrome());
+        b.launchAsync(searchUrl);
+
+        // Chờ SvelteKit render kết quả tìm kiếm
+        for (var j = 0; j < 10; j++) {
+            sleep(750);
+            doc = b.html();
+            if (doc && doc.select('a[href*="/watch/"]').size() > 0) break;
         }
+    } finally {
+        b.close();
     }
 
-    if (doc) {
+    if (doc && doc.select('a[href*="/watch/"]').size() > 0) {
         var list = parseCards(doc);
         
         // Nếu số lượng kết quả lấy được >= 12, giả định có trang kế tiếp
@@ -33,5 +36,5 @@ function execute(key, page) {
         return Response.success(list, next);
     }
     
-    return Response.error("Tìm kiếm thất bại: " + searchUrl);
+    return Response.error("Tìm kiếm thất bại hoặc không tìm thấy phim: " + key);
 }
