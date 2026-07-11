@@ -8,18 +8,358 @@ function execute() {
             script: "gen.js"
         },
         {
-            title: "Vietsub",
-            input: BASE_URL + "/genres/vietsub/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            title: "Big Boobs",
+            input: BASE_URL + "/genres/big-boobs/__data.json?page={{page}}&x-sveltekit-invalidated=001",
             script: "gen.js"
         },
         {
-            title: "3D Hentai",
-            input: BASE_URL + "/genres/3d/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            title: "Bú liếm",
+            input: BASE_URL + "/genres/bu-liem/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Nữ sinh",
+            input: BASE_URL + "/genres/nu-sinh/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Đụ Vú",
+            input: BASE_URL + "/genres/du-vu/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Stocking",
+            input: BASE_URL + "/genres/stocking/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Hiếp dâm",
+            input: BASE_URL + "/genres/hiep-dam/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Virgin",
+            input: BASE_URL + "/genres/virgin/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Anal",
+            input: BASE_URL + "/genres/anal/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Mind Break",
+            input: BASE_URL + "/genres/mind-break/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Femdom",
+            input: BASE_URL + "/genres/femdom/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Ahegao",
+            input: BASE_URL + "/genres/ahegao/__data.json?page={{page}}&x-sveltekit-invalidated=001",
             script: "gen.js"
         },
         {
             title: "Vanilla",
             input: BASE_URL + "/genres/vanilla/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Threesome",
+            input: BASE_URL + "/genres/threesome/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "MILF",
+            input: BASE_URL + "/genres/milf/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Sex Toy",
+            input: BASE_URL + "/genres/sex-toy/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Harem",
+            input: BASE_URL + "/genres/harem/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Plot",
+            input: BASE_URL + "/genres/plot/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Thủ Dâm",
+            input: BASE_URL + "/genres/thu-dam/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Loạn luân",
+            input: BASE_URL + "/genres/loan-luan/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Gang Bang",
+            input: BASE_URL + "/genres/gang-bang/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Bondage",
+            input: BASE_URL + "/genres/bondage/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Tsundere",
+            input: BASE_URL + "/genres/tsundere/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "NTR",
+            input: BASE_URL + "/genres/ntr/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Double Penetration",
+            input: BASE_URL + "/genres/double-penetration/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Giáo viên",
+            input: BASE_URL + "/genres/giao-vien/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Loli",
+            input: BASE_URL + "/genres/loli/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Megane",
+            input: BASE_URL + "/genres/megane/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Yuri",
+            input: BASE_URL + "/genres/yuri/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Đồ Bơi",
+            input: BASE_URL + "/genres/do-boi/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Ugly Bastard",
+            input: BASE_URL + "/genres/ugly-bastard/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Thác loạn",
+            input: BASE_URL + "/genres/thac-loan/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Maid",
+            input: BASE_URL + "/genres/maid/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Bạo dâm",
+            input: BASE_URL + "/genres/bao-dam/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Thôi miên",
+            input: BASE_URL + "/genres/thoi-mien/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Sữa mẹ",
+            input: BASE_URL + "/genres/sua-me/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Tống tình",
+            input: BASE_URL + "/genres/tong-tinh/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Da ngăm",
+            input: BASE_URL + "/genres/da-ngam/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "3D",
+            input: BASE_URL + "/genres/3d/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Bao cao su",
+            input: BASE_URL + "/genres/bao-cao-su/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Monster",
+            input: BASE_URL + "/genres/monster/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Y Tá",
+            input: BASE_URL + "/genres/y-ta/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Fantasy",
+            input: BASE_URL + "/genres/fantasy/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Xúc tu",
+            input: BASE_URL + "/genres/xuc-tu/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Foot Job",
+            input: BASE_URL + "/genres/foot-job/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "X-Ray",
+            input: BASE_URL + "/genres/x-ray/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Guro",
+            input: BASE_URL + "/genres/guro/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Kemonomimi",
+            input: BASE_URL + "/genres/kemonomimi/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Shota",
+            input: BASE_URL + "/genres/shota/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Futanari",
+            input: BASE_URL + "/genres/futanari/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Wafuku",
+            input: BASE_URL + "/genres/wafuku/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Elf",
+            input: BASE_URL + "/genres/elf/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Softcore",
+            input: BASE_URL + "/genres/softcore/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Tiểu tiện",
+            input: BASE_URL + "/genres/tieu-tien/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Big girls",
+            input: BASE_URL + "/genres/big-girls/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Quấy rối",
+            input: BASE_URL + "/genres/quay-roi/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Josei",
+            input: BASE_URL + "/genres/josei/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Gái quậy",
+            input: BASE_URL + "/genres/gai-quay/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Scat",
+            input: BASE_URL + "/genres/scat/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Idol",
+            input: BASE_URL + "/genres/idol/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Thuốc kích dục",
+            input: BASE_URL + "/genres/thuoc-kich-duc/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Succubus",
+            input: BASE_URL + "/genres/succubus/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Cosplay",
+            input: BASE_URL + "/genres/cosplay/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Mang thai",
+            input: BASE_URL + "/genres/mang-thai/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Ngủ",
+            input: BASE_URL + "/genres/ngu/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Vú lép",
+            input: BASE_URL + "/genres/vu-lep/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Trap",
+            input: BASE_URL + "/genres/trap/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Thụ thai",
+            input: BASE_URL + "/genres/thu-thai/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Yaoi",
+            input: BASE_URL + "/genres/yaoi/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Đẻ con",
+            input: BASE_URL + "/genres/de-con/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Goblin",
+            input: BASE_URL + "/genres/goblin/__data.json?page={{page}}&x-sveltekit-invalidated=001",
+            script: "gen.js"
+        },
+        {
+            title: "Furry",
+            input: BASE_URL + "/genres/furry/__data.json?page={{page}}&x-sveltekit-invalidated=001",
             script: "gen.js"
         }
     ]);
