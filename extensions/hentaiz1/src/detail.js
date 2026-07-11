@@ -132,9 +132,9 @@ function execute(url) {
                     for (var idx = 0; idx < svelteData.length; idx++) {
                         var item = svelteData[idx];
                         if (typeof item === 'string') {
-                            var matchCover = item.match(/^\/202[0-9]\/[0-9]{2}\/[a-zA-Z0-9-]+\.(?:jpg|png|webp)$/);
+                            var matchCover = item.match(/\/202[0-9]\/[0-9]{2}\/[a-zA-Z0-9-_.]+\.(?:jpg|png|webp)/i);
                             if (matchCover) {
-                                cover = normalizeCoverUrl(item);
+                                cover = normalizeCoverUrl(matchCover[0]);
                                 break;
                             }
                         }
@@ -149,6 +149,20 @@ function execute(url) {
         }
     } catch (e) {
         // Lỗi lấy API mục lục thì bỏ qua
+    }
+
+    // Fallback: Tìm ảnh bìa từ SvelteKit hydration data trong HTML nếu API không trả về
+    if (!cover) {
+        doc.select("script").forEach(function(s) {
+            var text = s.html() + "";
+            if (text.indexOf("filePath:") !== -1) {
+                text = text.replace(/\\"/g, '"').replace(/\\'/g, "'");
+                var fileMatch = text.match(/filePath\s*:\s*["']([^"']+)["']/);
+                if (fileMatch) {
+                    cover = normalizeCoverUrl(fileMatch[1]);
+                }
+            }
+        });
     }
 
     // Nếu vẫn rỗng tập, thêm tập hiện tại làm tập đơn

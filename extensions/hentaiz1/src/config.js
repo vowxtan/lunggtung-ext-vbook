@@ -26,26 +26,52 @@ function normalizeCoverUrl(url) {
 
 function parseCards(doc, selector) {
     if (!selector) selector = 'a[href*="/watch/"]';
+    
+    // Xây dựng bản đồ slug -> cover từ các thẻ script SvelteKit hydration tĩnh
+    var slugToCover = {};
+    doc.select("script").forEach(function(s) {
+        var text = s.html() + "";
+        if (text.indexOf("slug:") !== -1) {
+            text = text.replace(/\\"/g, '"').replace(/\\'/g, "'");
+            var parts = text.split(/slug\s*:\s*["']/);
+            for (var i = 1; i < parts.length; i++) {
+                var part = parts[i];
+                var slugMatch = part.match(/^([^"'\s,]+)/);
+                if (slugMatch) {
+                    var slug = slugMatch[1];
+                    var fileMatch = part.match(/filePath\s*:\s*["']([^"']+)["']/);
+                    if (fileMatch) {
+                        slugToCover[slug] = normalizeCoverUrl(fileMatch[1]);
+                    }
+                }
+            }
+        }
+    });
+
     var list = [];
     var added = {}; // Để tránh trùng lặp card trong cùng một trang
     doc.select(selector).forEach(function(e) {
-        var img = e.select("img").first();
-        if (!img) return;
         var link = e.attr("href") + "";
         if (!link) return;
         link = normalizeUrl(link);
         if (added[link]) return;
         added[link] = true;
 
+        var img = e.select("img").first();
         var title = e.select("h3, h2, h4").text() + "";
-        if (!title) {
+        if (!title && img) {
             title = img.attr("alt") + "";
         }
         title = title.trim();
         if (!title) return;
 
-        var cover = img.attr("src") || img.attr("data-src") || img.attr("data-srcset") || "";
-        cover = normalizeCoverUrl(cover);
+        var slug = decodeURIComponent(link.split('/').pop());
+        // Ưu tiên lấy cover từ dữ liệu SvelteKit hydration, fallback cào DOM
+        var cover = slugToCover[slug] || "";
+        if (!cover && img) {
+            cover = img.attr("src") || img.attr("data-src") || img.attr("data-srcset") || "";
+            cover = normalizeCoverUrl(cover);
+        }
 
         var episode = "";
         e.select("span, div, p").forEach(function(el) {
