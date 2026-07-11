@@ -2,7 +2,27 @@ load('config.js');
 
 function parseSvelteTable(table) {
     var data = table;
-    var indices = table[1]; 
+    
+    var indices = null;
+    if (table[1] && Array.isArray(table[1])) {
+        indices = table[1];
+    } else if (table[2] && Array.isArray(table[2])) {
+        indices = table[2];
+    }
+    
+    if (!indices) {
+        for (var idx = 0; idx < table.length; idx++) {
+            var item = table[idx];
+            if (item && typeof item === 'object') {
+                var ref = item.episodes || item.items || item.episodesList;
+                if (typeof ref === 'number' && Array.isArray(table[ref])) {
+                    indices = table[ref];
+                    break;
+                }
+            }
+        }
+    }
+    
     if (!indices || !Array.isArray(indices)) return [];
 
     function resolve(idx) { 
@@ -155,19 +175,19 @@ function execute(url) {
             var svelteData = apiData.result || apiData.data || null;
 
             if (svelteData) {
-                // ① Bổ sung cover nếu chưa có
+                var svelteStr = typeof svelteData === 'string' ? svelteData : JSON.stringify(svelteData);
+                
+                // ① Bổ sung cover nếu chưa có (dùng regex trên svelteStr gốc tránh lỗi trích xuất do JSON.stringify escape)
                 if (!cover) {
-                    if (svelteData.posterImage && svelteData.posterImage.filePath) {
-                        cover = IMAGE_URL + svelteData.posterImage.filePath;
-                    } else if (svelteData.backdropImage && svelteData.backdropImage.filePath) {
-                        cover = IMAGE_URL + svelteData.backdropImage.filePath;
-                    } else if (svelteData.thumbnailImage && svelteData.thumbnailImage.filePath) {
-                        cover = IMAGE_URL + svelteData.thumbnailImage.filePath;
+                    var matchCover = svelteStr.match(/\/202[0-9]\/[0-9]{2}\/[a-zA-Z0-9-_.]+\.(?:jpg|png|webp)/i);
+                    if (matchCover) {
+                        cover = normalizeCoverUrl(matchCover[0]);
                     }
                 }
 
                 // ② Giải mã TOC
-                episodesList = parseSvelteTable(svelteData);
+                var parsedData = typeof svelteData === 'string' ? JSON.parse(svelteData) : svelteData;
+                episodesList = parseSvelteTable(parsedData);
             }
         }
     } catch (e) {}
@@ -214,7 +234,6 @@ function execute(url) {
         } catch (e) {}
     }
     if (suggests.length === 0) {
-        // Fallback dùng tên phim để search gợi ý
         suggests.push({
             title: "Phim đề xuất",
             input: name,
