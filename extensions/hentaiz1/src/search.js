@@ -18,7 +18,7 @@ function execute(key, page) {
         for (var j = 0; j < 10; j++) {
             sleep(750);
             doc = b.html();
-            if (doc && doc.select('a[href*="/watch/"] img').size() > 0) break;
+            if (doc && doc.select('a[href*="/watch/"]').size() > 0) break;
         }
     } finally {
         b.close();

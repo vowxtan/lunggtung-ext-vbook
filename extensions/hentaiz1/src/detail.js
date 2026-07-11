@@ -12,8 +12,7 @@ function execute(url) {
         for (var j = 0; j < 10; j++) {
             sleep(750);
             doc = b.html();
-            // Đợi đến khi có tiêu đề h2 và ảnh bìa phim tải xong
-            if (doc && doc.select("h2").size() > 0 && doc.select("img").size() > 0) break;
+            if (doc && doc.select("h2").size() > 0) break;
         }
     } finally {
         b.close();
