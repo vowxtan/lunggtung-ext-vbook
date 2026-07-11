@@ -3,12 +3,12 @@ load("config.js");
 function execute(input, page) {
     if (!page) page = "1";
     var episodeId = "";
-    var hash = "1edhnia";
+    var hash = "18sc35r"; // Default comment hash
 
     try {
         var params = JSON.parse(input);
         episodeId = params.episodeId;
-        hash = params.hash;
+        hash = params.hash || "18sc35r";
     } catch (e) {
         episodeId = input; // Fallback
     }
@@ -16,11 +16,12 @@ function execute(input, page) {
     if (!episodeId) return Response.success([]);
 
     load("crypto.js");
-    // Tuần tự hóa SvelteKit devalue payload
+    // Tuần tự hóa SvelteKit devalue payload cho comments
     var payload = CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(JSON.stringify([
-        { "commentableType": 1, "commentableId": 2, "page": 3, "sort": 4 },
-        "ANIME_EPISODE",
+        ["__skrao", 1],
+        { "commentableId": 2, "commentableType": 3, "page": 4, "sort": 5 },
         episodeId,
+        "ANIME_EPISODE",
         parseInt(page) || 1,
         "top"
     ])));
@@ -34,9 +35,29 @@ function execute(input, page) {
         if (svelteData) {
             var table = [];
             try { eval("table = " + svelteData + ";"); } catch (e) { }
-            var indices = table[1];
-            var comments = [];
+            
+            // Tìm mảng indices động tương tự như detail.js
+            var indices = null;
+            if (table[1] && Array.isArray(table[1])) {
+                indices = table[1];
+            } else if (table[2] && Array.isArray(table[2])) {
+                indices = table[2];
+            }
+            
+            if (!indices) {
+                for (var idx = 0; idx < table.length; idx++) {
+                    var item = table[idx];
+                    if (item && typeof item === 'object') {
+                        var ref = item.comments || item.items;
+                        if (typeof ref === 'number' && Array.isArray(table[ref])) {
+                            indices = table[ref];
+                            break;
+                        }
+                    }
+                }
+            }
 
+            var comments = [];
             if (indices && Array.isArray(indices)) {
                 function resolve(idx) { return (typeof idx === 'number') ? table[idx] : idx; }
 

@@ -245,7 +245,7 @@ function execute(url) {
     // 5. Bình luận
     var comments = undefined;
     if (episodeId) {
-        var commentHash = "1edhnia";
+        var commentHash = "18sc35r";
         var commentHashMatch = html.match(/\/remote\/([a-zA-Z0-9_-]+)\/getComments/);
         if (commentHashMatch) {
             commentHash = commentHashMatch[1];
