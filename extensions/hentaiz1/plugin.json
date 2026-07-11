@@ -2,7 +2,7 @@
   "metadata": {
     "name": "HentaiZ1",
     "author": "lunggtung",
-    "version": 3,
+    "version": 4,
     "source": "https://hentaiz1.com",
     "regexp": "(www\\.)?hentaiz1\\.com/.*",
     "description": "Xem Hentai Vietsub tại hentaiz1.com",
@@ -18,6 +18,7 @@
     "search": "search.js",
     "toc": "toc.js",
     "chap": "chap.js",
-    "track": "track.js"
+    "track": "track.js",
+    "suggest": "suggest.js"
   }
 }

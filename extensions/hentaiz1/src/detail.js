@@ -19,12 +19,12 @@ function execute(url) {
     }
 
     if (doc && doc.select("h2").size() > 0) {
-        return parseDetail(doc);
+        return parseDetail(doc, url);
     }
     return Response.error("Không thể tải chi tiết phim: " + url);
 }
 
-function parseDetail(doc) {
+function parseDetail(doc, url) {
     var rawName = doc.select("h2").first() ? doc.select("h2").first().text() + "" : "";
     // Cắt bỏ phần " - Tập X" để lấy tên gốc của phim
     var name = rawName.replace(/\s*-\s*Tập\s*\d+.*$/i, "").replace(/\s*Tập\s*\d+.*$/i, "").trim();
@@ -52,6 +52,35 @@ function parseDetail(doc) {
         });
     });
 
+    // Trích xuất slug phim hiện tại để lọc bỏ các tập cùng bộ trong đề xuất
+    var currentSlug = "";
+    var parts = url.split('/watch/');
+    if (parts.length > 1) {
+        currentSlug = parts[1].split('?')[0].replace(/-\d+$/, "");
+    }
+
+    // Lấy HTML các card phim khác làm danh sách đề xuất
+    var suggestHtml = "";
+    var seen = {};
+    doc.select("a[href*='/watch/']").forEach(function(e) {
+        var href = e.attr("href") + "";
+        if (!href) return;
+        href = normalizeUrl(href);
+        if (currentSlug && href.indexOf(currentSlug) !== -1) return; // Bỏ qua tập phim cùng bộ
+        if (seen[href]) return;
+        seen[href] = true;
+        suggestHtml += e.outerHtml();
+    });
+
+    var suggests = [];
+    if (suggestHtml) {
+        suggests.push({
+            title: "Phim đề xuất",
+            input: suggestHtml,
+            script: "suggest.js"
+        });
+    }
+
     return Response.success({
         name: name,
         cover: cover,
@@ -59,6 +88,7 @@ function parseDetail(doc) {
         author: "HentaiZ",
         description: description,
         ongoing: true,
-        genres: genres
+        genres: genres,
+        suggests: suggests.length > 0 ? suggests : undefined
     });
 }
