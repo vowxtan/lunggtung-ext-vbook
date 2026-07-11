@@ -5,7 +5,10 @@ function execute(url) {
     var slug = decodeURIComponent(url.split('/').pop());
 
     // 1. Thử lấy từ cacheStorage đã được lưu dưới dạng JSON mảng ở detail.js (Chạy offline cực nhanh)
-    var cached = cacheStorage.getItem("cached_toc_" + slug);
+    var cached = null;
+    if (typeof cacheStorage !== "undefined") {
+        cached = cacheStorage.getItem("cached_toc_" + slug);
+    }
     if (cached) {
         try {
             var chapters = JSON.parse(cached);

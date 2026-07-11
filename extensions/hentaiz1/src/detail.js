@@ -225,7 +225,9 @@ function execute(url) {
     }
 
     // Cache TOC để toc.js đọc offline tức thì
-    cacheStorage.setItem("cached_toc_" + slug, JSON.stringify(episodesList));
+    if (typeof cacheStorage !== "undefined") {
+        cacheStorage.setItem("cached_toc_" + slug, JSON.stringify(episodesList));
+    }
 
     // 4. Tạo gợi ý đề xuất qua API getSuggestedEpisodes
     var suggests = [];
