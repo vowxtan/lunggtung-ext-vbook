@@ -20,10 +20,19 @@ function execute(url, page) {
         b.launchAsync(fetchUrl);
 
         // Chờ SvelteKit render Client-side JS
+        // Giai đoạn 1: Chờ cho đến khi có ít nhất 1 card link xuất hiện
         for (var j = 0; j < 10; j++) {
             sleep(750);
             doc = b.html();
             if (doc && doc.select('a[href*="/watch/"]').size() > 0) break;
+        }
+
+        // Giai đoạn 2: Chờ thêm để SvelteKit hydrate xong toàn bộ ảnh bìa
+        // Đảm bảo ít nhất 4 ảnh thực tế đã được gán src trỏ tới CDN
+        for (var k = 0; k < 5; k++) {
+            sleep(500);
+            doc = b.html();
+            if (doc && doc.select('a[href*="/watch/"] img[src*="storage.haiten"]').size() >= 4) break;
         }
     } finally {
         b.close();
