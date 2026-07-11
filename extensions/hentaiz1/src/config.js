@@ -13,6 +13,7 @@ function normalizeUrl(url) {
 function normalizeCoverUrl(url) {
     if (!url) return '';
     url = url + "";
+    if (url.indexOf('/watch/') !== -1) return '';
     if (url.indexOf('//') === 0) return 'https:' + url;
     if (url.indexOf('http') === 0) return url;
     if (url.indexOf('/') === 0) return IMAGE_URL + url;
