@@ -20,6 +20,15 @@ function execute(key, page) {
             doc = b.html();
             if (doc && doc.select('a[href*="/watch/"]').size() > 0) break;
         }
+
+        // Chờ SvelteKit hydrate xong toàn bộ ảnh bìa
+        for (var k = 0; k < 12; k++) {
+            sleep(300);
+            doc = b.html();
+            var loadedCovers = doc ? doc.select('a[href*="/watch/"] img[src*="storage.haiten"]').size() : 0;
+            var totalCards = doc ? doc.select('a[href*="/watch/"]').size() : 0;
+            if (loadedCovers >= Math.min(totalCards, 12)) break;
+        }
     } finally {
         b.close();
     }

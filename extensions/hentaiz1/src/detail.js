@@ -49,7 +49,7 @@ function execute(url) {
     }
 
     var html = doc.toString() + "";
-    var slug = url.split('/').pop();
+    var slug = decodeURIComponent(url.split('/').pop());
     
     // 1. Parse tiêu đề
     var rawName = doc.select("h2").first() ? doc.select("h2").first().text() + "" : "";

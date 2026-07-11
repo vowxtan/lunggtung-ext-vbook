@@ -28,11 +28,13 @@ function execute(url, page) {
         }
 
         // Giai đoạn 2: Chờ thêm để SvelteKit hydrate xong toàn bộ ảnh bìa
-        // Đảm bảo ít nhất 4 ảnh thực tế đã được gán src trỏ tới CDN
-        for (var k = 0; k < 5; k++) {
-            sleep(500);
+        // Chờ cho đến khi hầu hết các card đã được gán ảnh thật từ CDN (tối thiểu 12 ảnh)
+        for (var k = 0; k < 12; k++) {
+            sleep(300);
             doc = b.html();
-            if (doc && doc.select('a[href*="/watch/"] img[src*="storage.haiten"]').size() >= 4) break;
+            var loadedCovers = doc ? doc.select('a[href*="/watch/"] img[src*="storage.haiten"]').size() : 0;
+            var totalCards = doc ? doc.select('a[href*="/watch/"]').size() : 0;
+            if (loadedCovers >= Math.min(totalCards, 12)) break;
         }
     } finally {
         b.close();

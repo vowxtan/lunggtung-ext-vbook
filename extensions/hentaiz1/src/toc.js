@@ -2,7 +2,7 @@ load('config.js');
 
 function execute(url) {
     url = normalizeUrl(url);
-    var slug = url.split('/').pop();
+    var slug = decodeURIComponent(url.split('/').pop());
 
     // 1. Thử lấy từ cacheStorage đã được lưu dưới dạng JSON mảng ở detail.js (Chạy offline cực nhanh)
     var cached = cacheStorage.getItem("cached_toc_" + slug);
