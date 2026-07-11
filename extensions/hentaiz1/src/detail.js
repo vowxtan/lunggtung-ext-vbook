@@ -42,7 +42,7 @@ function parseSvelteTable(table) {
             });
         }
     }
-    return chapters.reverse();
+    return chapters;
 }
 
 function execute(url) {
@@ -206,6 +206,7 @@ function execute(url) {
                 });
             }
         });
+        episodesList.reverse(); // Đảo ngược để đưa về thứ tự tăng dần (Tập 1, Tập 2...)
     }
 
     if (episodesList.length === 0) {
