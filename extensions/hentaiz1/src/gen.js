@@ -13,9 +13,20 @@ function execute(url, page) {
         }
     }
 
-    var res = fetch(fetchUrl);
-    if (res.ok) {
-        var doc = res.html();
+    var res = fetch(fetchUrl, { headers: { "User-Agent": UserAgent.chrome() } });
+    var doc = null;
+    if (res && res.ok) {
+        doc = res.html();
+    } else {
+        var browser = Engine.newBrowser();
+        try {
+            doc = browser.launch(fetchUrl, 8000);
+        } finally {
+            browser.close();
+        }
+    }
+
+    if (doc) {
         var list = parseCards(doc);
         
         // Nếu số lượng card lấy được >= 12, giả định có trang tiếp theo
@@ -24,5 +35,5 @@ function execute(url, page) {
 
         return Response.success(list, next);
     }
-    return Response.error("Không thể tải trang: " + (res ? res.status : "không có phản hồi"));
+    return Response.error("Không thể tải trang: " + fetchUrl);
 }
