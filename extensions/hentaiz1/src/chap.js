@@ -4,8 +4,8 @@ function execute(url) {
     url = normalizeUrl(url);
 
     var res = fetch(url, { headers: { "User-Agent": UserAgent.chrome() } });
-    var doc = res && res.ok ? res.html() : null;
     var html = res && res.ok ? res.text() + "" : "";
+    var doc = html ? Html.parse(html) : null;
 
     var tracks = [];
     var embedUrl = "";
