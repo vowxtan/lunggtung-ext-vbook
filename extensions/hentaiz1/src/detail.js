@@ -173,7 +173,7 @@ function execute(url) {
 
     try {
         load("crypto.js");
-        var payload = CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(JSON.stringify([{ "currentSlug": 1 }, slug])));
+        var payload = CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(JSON.stringify([["__skrao", 1], { "currentSlug": 2 }, slug])));
         var apiUrl = BASE_URL + "/_app/remote/" + hash + "/getSeriesEpisodes?payload=" + encodeURIComponent(payload);
 
         var apiRes = fetch(apiUrl, { headers: { "User-Agent": UserAgent.android() } });

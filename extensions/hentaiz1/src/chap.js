@@ -62,7 +62,7 @@ function execute(url) {
         if (episodeId) {
             try {
                 load("crypto.js");
-                var rawPayload = JSON.stringify([{ "episodeId": 1 }, episodeId]);
+                var rawPayload = JSON.stringify([["__skrao", 1], { "episodeId": 2 }, episodeId]);
                 var base64Payload = CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(rawPayload));
                 var apiUrl = BASE_URL + "/_app/remote/" + hash + "/getEpisodeEmbedUrl?payload=" + encodeURIComponent(base64Payload);
 
